@@ -1,4 +1,5 @@
-https://img.shields.io/badge/${zenn}-${article}-${#3EA8FF}.svg
+[![zenn](https://img.shields.io/badge/zenn-article-3EA8FF.svg)](https://zenn.dev/t_koreeda)
+
 
 ## Overview
 
