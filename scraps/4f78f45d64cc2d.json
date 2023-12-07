@@ -1,0 +1,55 @@
+{
+  "title": "snowflake",
+  "closed": false,
+  "archived": false,
+  "created_at": "2023-08-15",
+  "comments": [
+    {
+      "author": "t_koreeda",
+      "created_at": "2023-08-21",
+      "body_markdown": "### 外部ステージのファイルを確認する方法\n```sql\nSELECT $1, $2, $3, $4, $5, $6, $7\nFROM 'hogehoge.csv';\n```\n\n### 外部ステージの定義確認\n指定された外部ステージ（ここでは@DB_STAGE）の定義を確認してください。以下のコマンドを実行することで、外部ステージの詳細情報を表示することができます。\n\n```sql\nDESC STAGE DB_STAGE;\n```\n\n### ファイルの存在確認\n指定したファイルパス（export/cdc/CDC_TXN-20230821.csv.gz）が実際に存在するか確認してください。例えば、以下のコマンドでリストを取得できます。\n\n```sql\nLIST '@DB_STAGE/export/cdc/';\n```",
+      "body_updated_at": "2023-08-21"
+    },
+    {
+      "author": "t_koreeda",
+      "created_at": "2023-08-21",
+      "body_markdown": "外部ステージに設定されたファイルフォーマットを確認する。INFORMATION_SCHEMAのViewの中にFILE_FORMATSがあるので活用\n```sql\nSELECT *\nFROM DATALAKE.INFORMATION_SCHEMA.FILE_FORMATS;\n\nALTER STAGE DB_STAGE\nSET FILE_FORMAT = (FORMAT_NAME = CSV);\n```",
+      "body_updated_at": "2023-08-21",
+      "children": [
+        {
+          "author": "t_koreeda",
+          "created_at": "2023-08-21",
+          "body_markdown": "外部ステージごとにファイルフォーマットが固定なのか確認が必要。同じ外部ステージでcsvとparquetを使い分けたい。操作中に異なるファイルフォーマットを動的に指定してデータをロードする必要あり。",
+          "body_updated_at": "2023-08-21"
+        }
+      ]
+    },
+    {
+      "author": "t_koreeda",
+      "created_at": "2023-08-24",
+      "body_markdown": "### snowflakeでVARCHAR型とSTRING型の違い\n基本的に同じ。\n\n**VARCHAR**: 可変長の文字列データ型。定義時に最大長を指定することができますが、指定しない場合はデフォルトの最大長（16777216 文字）となります。\n**STRING**: VARCHARのエイリアス（同義語）として使われることが多いです。実際には、STRINGはVARCHARと同じ振る舞いをします。\nhttps://docs.snowflake.com/ja/sql-reference/data-types-text#varchar",
+      "body_updated_at": "2023-08-24"
+    },
+    {
+      "author": "t_koreeda",
+      "created_at": "2023-08-24",
+      "body_markdown": "\n### Failed to cast variant value 1 to BOOLEAN の対応\nsnowflakeではVariant型のデータ値をBOOLEAN型にcastすることができない。\n一回、VARCHAR型を経由してからBOOLEAN型にする。\n```sql\n((data:test_bool)::VARCHAR)::BOOLEAN\n```",
+      "body_updated_at": "2023-08-24"
+    },
+    {
+      "author": "t_koreeda",
+      "created_at": "2023-10-11",
+      "body_markdown": "## マルチクラスターウェアハウスとは\nSnowflakeのマルチクラスターコンピューティングウェアハウスは、**企業が大量のデータをリアルタイムで効率的に処理するニーズに応えるための強力な機能** です。大規模なデータセットに対するクエリや、多数のユーザーからの同時アクセスが予測される場面で、この機能は特に価値を発揮します。\n\n1. スケーラビリティ: トラフィックやクエリの負荷が増加すると、自動的に複数のコンピューティングクラスターを起動して、その負荷を分散する能力があります。\n2. パフォーマンス: 複数のユーザーまたはシステムが同時にデータウェアハウスにアクセスしても、クエリのパフォーマンスが低下することがありません。これは、必要に応じて追加のクラスターが動的にスピンアップされるためです。\n3. コスト効率: クラスターは、必要なときだけ起動されるため、リソースの浪費を減少させ、コスト効率を高めることができます。\n4. 自動的なスケールダウン: 負荷が減少すると、不要なクラスターは自動的にシャットダウンされ、リソースの消費を最小限に抑えます。\n5. 分離されたリソース: コンピューティングとストレージが分離されているため、それぞれを独立してスケールアップ・ダウンすることができます。\n\nhttps://docs.snowflake.com/ja/user-guide/warehouses-multicluster\n\n\nSnowflakeのデフォルトの仮想ウェアハウスはシングルコンピュートで、同時に複数のクエリを実行することはできません。複数のクエリが送られると、一つずつ順番に処理されます。しかし、ユーザーや連携システムが増えると、この方式ではクエリの処理に遅延が生じる恐れがあります。\n\nこの問題を解消するために、Snowflakeは「Multi-Cluster Warehouse (MCW)」を提供しています。これは複数のクラスタを持つ仮想ウェアハウスで、高い同時並行性を持っており、多くのリクエストに効率的に対応することができます。ただし、この機能はEnterprise Edition以上のプランでのみ利用可能です。\n\nhttps://dev.classmethod.jp/articles/snowflake-multi-cluster/"
+    },
+    {
+      "author": "t_koreeda",
+      "created_at": "2023-10-11",
+      "body_markdown": "## Query Acceleration Serviceとは\n\nSnowflakeの「Query Acceleration Service」は、ウェアハウスのクエリワークロードを高速化するための機能です。このサービスを活用することで、特定の高リソース消費クエリ（外れ値クエリ）の影響を低減し、ウェアハウス全体のパフォーマンスを向上させることができます。この高速化は、クエリ処理の一部をSnowflakeの共有コンピューティングリソースにオフロードすることで実現されます。\n\nこの機能は、以下のようなワークロードに特にメリットをもたらします:\n\nアドホック分析: 予期せぬクエリが投げられる場面での分析。\n予測困難なデータ量: クエリごとに取得するデータの量が不確かな場合。\n大量データスキャン: 大規模なデータスキャンや特定のフィルタリングを伴うクエリ。\n「Query Acceleration Service」の導入により、並行処理の量を増やすとともに、データスキャンやフィルタリングにかかる時間を短縮し、ワークロードの効率的な処理が期待できます。\n\nhttps://docs.snowflake.com/ja/user-guide/warehouses-multicluster"
+    },
+    {
+      "author": "t_koreeda",
+      "created_at": "2023-10-11",
+      "body_markdown": "# snowpipe関係コマンド\n### snowpipeが動作したかを確認\n```sql\nSELECT SYSTEM$PIPE_STATUS('[テーブル名]');\n```\n\n### IAM_POLICYを確認\n```sql\nSELECT SYSTEM$GET_AWS_SNS_IAM_POLICY( 'arn:~~~' );\n```\n\n### 作成されたPipeを確認\n```sql\nSHOW PIPES;\n```\n\n### copy履歴を確認\n```sql\nSELECT *\nFROM TABLE(information_schema.copy_history(table_name=>'[テーブル名]', start_time=> dateadd(hours, -100, current\n```"
+    }
+  ]
+}
