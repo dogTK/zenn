@@ -8,7 +8,7 @@ topics:
   - "bigdata"
   - "snowpark"
   - "Docker"
-published: false
+published: true
 ---
 
 データエンジニアの是枝です。
