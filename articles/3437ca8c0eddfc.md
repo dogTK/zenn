@@ -27,6 +27,14 @@ https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overvi
 ::: message alert
 本チュートリアルではDocker Desktopがインストールされている前提で話をしますので、まだの方は[こちら](https://docs.docker.com/get-docker/)を参考にインストールをお願いします。
 :::
+
+（追記）
+Snowpark Container Serviceに関する記事を一番に出そうとしたら、masuoさんに先越されました...笑
+https://zenn.dev/tmasuo/articles/ab21cf8ac1c76f
+
+しかし、Masuoさんの記事はQuick startを取り扱ってるので、私のTutorialといい感じで棲み分けられそうです！両方の記事をご参考ください！！
+（GAになってからsnowflake社員以外では一番？）
+
 ## Snowpark Container Serviceとは？
 
 公式ドキュメントを日本語訳にかけて要点だけを読んでみます。
@@ -63,7 +71,7 @@ https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overvi
 ```sql
 use role ORGADMIN;
 
-CREATE ACCOUNT SNOWPARK_TEST
+CREATE ACCOUNT SNOWPARK_CONTAINER_TEST
       ADMIN_NAME = TATSUYA_KOREEDA
       ADMIN_PASSWORD = [passwordを入力]
       EMAIL = '[メールアドレスを入力]'
@@ -367,6 +375,39 @@ DESCRIBE SERVICE echo_service;
 ```bash
 ({"echoendpoint":"asdfg-myorg-myacct.snowflakecomputing.app"})
 ```
+
+
+**(追記)**
+snowvillageのslackにてchatworkのみっつさんより、snowflake内部で動くk8sの仕様であることをおしえていただきました！
+active-nodeがすぐに確保出来なかったから、表示されない状態になる可能性があるようです。compute-poolはすぐ起動して処理できるワケではなくactive-nodeを確保して動き始めるので、この場合、active-nodeが確保してからSERVICEが動く事になるので、その段階にならないとendポイントも作られず表示されないとのことです！
+
+また、KDDIのsakatokuさんより、エンドポイントを確認する専用コマンドがあることをおしえていただきました！
+
+```sql
+SHOW ENDPOINTS IN SERVICE echo_service;
+```
+https://docs.snowflake.com/en/sql-reference/sql/show-endpoints
+なにか壁に当たったときに皆で一緒に問題を議論できるのはコミュニティのいいところですね〜
+
+私がこちらを叩いたところ以下の表示になっていたので、数分待ってみると無事エンドポイントが確認できるようになりました。
+「Endpoints provisioning in progress... check back in a few minutes」
+
+というわけで引き続き「web browser経由で利用する方法」をやっていきます。
+
+ingress_url列に表示されたエンドポイントに「/ui」をつけてbrowserよりアクセスしてみます。
+
+```
+https://[ingress_url列に表示されたエンドポイント]/ui
+```
+
+アクセスできました！！初回はログインを要求されるので、snowflakeアカウントにろぐいんするときのlogin_nameとpasswordを入れてください。
+![](https://storage.googleapis.com/zenn-user-upload/cfbc0bb016b5-20231224.png)
+
+UIが表示されました！
+![](https://storage.googleapis.com/zenn-user-upload/2ad5804b6a90-20231224.png)
+
+様々な文字列をinputに入力すると、同期的にoutputに返してくれます...!これは夢が広がりますね...!
+![](https://storage.googleapis.com/zenn-user-upload/a7edf5744cf2-20231224.gif)
 
 ここまでがTutorial 1になります。
 
