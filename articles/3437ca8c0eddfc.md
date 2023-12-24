@@ -11,6 +11,8 @@ topics:
 published: true
 ---
 
+本記事は、[Snowflake Advent Calendar 2023](https://qiita.com/advent-calendar/2023/snowflake) の 25 日目です。
+
 データエンジニアの是枝です。
 
 Snowpark Container Service、とうとうGAが始まりましたね...!
