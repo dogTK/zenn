@@ -54,6 +54,8 @@ https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overvi
 
 つまり、Snowpark Container Servicesは、Snowflake内で簡単にアプリケーションを実行できるツールです。GPU を用いた LLM を含む機械学習モデルの学習及び実行やあらゆる言語の実行が可能になります。それも外部にデータを移すことなく、Snowflake上で直接アプリを動かせるようになります。
 
+![](https://storage.googleapis.com/zenn-user-upload/cf4d4272e5cf-20231224.png)
+
 > Snowflake は、イメージを保存するための[OCIv2準拠サービスである](https://github.com/opencontainers/distribution-spec/blob/main/spec.md)*イメージ レジストリ*を提供します 。これにより、OCI クライアント (Docker CLI や SnowSQL など) が Snowflake アカウントのイメージ レジストリにアクセスできるようになります。
 > 
 
