@@ -21,7 +21,9 @@ Powered by Snowflakeを体現しようと尽力している弊社にとって大
 
 ::: message alert
 
-2023年12月22日現在、Snowpark Container Services 、AWS の ヨーロッパ (ロンドン)、アジアパシフィック (ムンバイ)でしか使用できません。また、トライアルアカウントはサポートされていないことに注意してください。Azure と GCP のプライベート プレビューは後日発表される予定のようです。こちらは状況が変わり次第、また追記していきます。
+~~2023年12月22日現在、Snowpark Container Services 、AWS の ヨーロッパ (ロンドン)、アジアパシフィック (ムンバイ)でしか使用できません。また、トライアルアカウントはサポートされていないことに注意してください。Azure と GCP のプライベート プレビューは後日発表される予定のようです。こちらは状況が変わり次第、また追記していきます。~~
+
+こちら、とうとう東京リージョンが使えるようになりました！！そのため、本記事の「ムンバイまたはロンドンリージョンに環境を作る」は対応しなくても良くなります！
 
 https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overview#available-regions
 
@@ -66,7 +68,11 @@ https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overvi
 では、早速Snowpark Container Servicesのチュートリアルをやってみようと思います。参考にしたドキュメントはこちらになります。
 https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overview-tutorials
 
-## ムンバイまたはロンドンリージョンに環境を作る
+## ~~ムンバイまたはロンドンリージョンに環境を作る~~ （しなくて良い）
+
+::: message alert
+SPCSは東京リージョンにリリースされ、ムンバイまたはロンドンリージョンに環境を作る必要はなくなりました。こちらの手順はスキップし、「Snowflakeの各種オブジェクトを用意する」に進みください。
+:::
 
 チュートリアルを始める前に、orgadminロールを使用して、[create account](https://docs.snowflake.com/ja/sql-reference/sql/create-account)コマンドでムンバイまたはロンドンリージョンに環境を作る必要があります。
 
