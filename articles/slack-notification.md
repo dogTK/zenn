@@ -4,6 +4,7 @@ emoji: "❄️"
 type: "tech"
 topics: [slack, snowflake, dataengineering, bigdata]
 published: true
+publication_name: "dataheroes"
 ---
 
 ## はじめに
