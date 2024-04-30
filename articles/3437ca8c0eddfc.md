@@ -9,6 +9,7 @@ topics:
   - "snowpark"
   - "Docker"
 published: true
+publication_name: "dataheroes"
 ---
 
 本記事は、[Snowflake Advent Calendar 2023](https://qiita.com/advent-calendar/2023/snowflake) の 25 日目です。
