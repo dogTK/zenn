@@ -1,6 +1,6 @@
 ---
 title: "SnowflakeでVCFファイルのバリアントフィルタリング ~Registry of Open Data on AWSの利用~"
-emoji: "😎"
+emoji: "🧬"
 type: "tech"
 topics: [bigdata, WholeGenomeSequence, Bioinformatics, snowflake, aws]
 published: false
@@ -9,15 +9,7 @@ published: false
 ## はじめに
 バイオインフォマティシャン兼データエンジニアのこれえだです。
 
-シーケンシング技術の進歩によりゲノムデータの生成速度が急速に増加し、データの生成コストも劇的に低下しているためバイオ系データはムーアの法則でどんどん増えています。SRAデータの容量に関して言えば、2007年5月時点では47.04 GBだったものが、2024年2月では27.93 PBと62万倍に増えています。
-![](/images/snowflake-registry-of-open-data-on-aws/growth_biodata.png)
-*増え続けるSRAデータ 出典：https://www.ncbi.nlm.nih.gov/sra/docs/sragrowth/*
-
-またDNA, RNA, エピゲノム, タンパク質、タンパク質や化合物の構造情報、相互作用情報などバイオデータの種類は多く容量が大きくなり、バイオデータを管理するための、ストレージコストと管理コストの増大が課題となっています。
-![](/images/snowflake-registry-of-open-data-on-aws/kind-of-biodata.png)
-*多岐に渡るバイオデータの種類 出典：https://www.semanticscholar.org/paper/The-European-Bioinformatics-Institute%E2%80%99s-data-2014-Brooksbank-Bergman/1c11992577c22af41ef1e861656d146fdd5d0f53*
-
-Snowflakeのヘルスケア業界での利活用は日本国内であまり活発ではありません。しかし、Snowflakeのメリットを活かせば多くのバイオデータ解析を行うことができます。今回は次世代シーケンサから得られたWhole genome sequenceデータといったゲノムデータからバリアントコールされたVCFファイルをSnowflake内に取り込んで解析する状態にする方法を解説しようと思います。Registry of Open Data on AWSで公開されているデータはS3に存在するため、snowflakeで簡単に外部ステージ統合して利用することができます。今回はこちらのやり方を中心に解説していこうと思います。
+今回は、次世代シーケンサから得られたWhole genome sequenceデータといったゲノムデータからバリアントコールされたVCFファイルをSnowflake内に取り込んで解析する状態にする方法を解説しようと思います。Registry of Open Data on AWSで公開されているデータはS3に存在するため、snowflakeで簡単に外部ステージ統合して利用することができます。今回はこちらのやり方を中心に解説していこうと思います。
 
 ## Registry of Open Data on AWSとは
 Registry of Open Data on AWS（AWSのオープンデータレジストリ）とは、Amazon Web Services（AWS）が提供するプラットフォームで、研究者、データサイエンティスト、開発者が自由にアクセスできるオープンデータセットのカタログです。このレジストリには、さまざまな分野のオープンデータが含まれており、データを探して使用するのが簡単になります。バイオインフォマティクスに関するデータも多く存在しています。
@@ -28,7 +20,6 @@ Registry of Open Data on AWS（AWSのオープンデータレジストリ）と�
 今回はこちらに紹介されている1000genome projectのDRAGENデータとNIHが用意したClinVarのデータを使って公共データの外部ステージ登録とVCFデータのアノテーション付けを行い、SQLでバリアントフィルタリングすることに挑戦していきます。
 
 ## 公共データの外部ステージ登録とVCFデータのアノテーション付け
-
 大まかな解析の流れは以下のようになります。
 
 1. Open Data RegistryのDRAGEN 1000-Genomesプロジェクトの8人分ゲノムデータが入ったS3を外部ステージ登録する
@@ -38,9 +29,10 @@ Registry of Open Data on AWS（AWSのオープンデータレジストリ）と�
 ![](/images/snowflake-registry-of-open-data-on-aws/dragen_clinvar.png)
 *DRAGENとClinVarのデータが入ったS3を外部ステージ登録しsnowflakeで解析*
 
-### DRAGENのS3を外部ステージ登録
+DRAGEN 1000-GenomesプロジェクトのゲノムデータをSnowflakeに取り込み、解析可能な状態にしていきます。次に外部ステージに登録したデータをSnowflakeのテーブルに取り込み、データのフィルタリングや解析を実行可能にします。最後に、ClinVarのアノテーションデータをSnowflakeに取り込み、ゲノムデータにアノテーションを付加していきます。
 
-はじめにDRAGENのS3のURI (s3://1000genomes-dragen-3.7.6/data/individuals/hg38-graph-based）をSnowflakeのステージに登録していきます。その後にSQLでS3に入っているデータセットをDIRECTORY関数用いたクエリで確認できます。
+### DRAGENのS3を外部ステージ登録
+はじめにDRAGENのS3のURI (s3://1000genomes-dragen-3.7.6/data/individuals/hg38-graph-based）をSnowflakeのステージに登録していきます。Snowflakeの外部ステージにS3バケットを登録することで、Snowflakeから直接S3のデータにアクセスできるようになります。登録した外部ステージを使って、S3に保存されているデータセットを確認するためのSQLクエリを実行します。S3に入っているデータセットをDIRECTORY関数用いたクエリで確認できます。
 
 ```sql
 create or replace stage dragen_all
@@ -53,7 +45,7 @@ SELECT * FROM DIRECTORY( @dragen_all )
 where relative_path rlike '/HG0011[0-7].*.hard-filtered.vcf.gz'
 ;
 ```
-
+クエリを実行すると、指定したパターンに一致するファイルがリストアップされます。以下は、クエリ結果のサンプルです。今回は、あらかじめハードフィルターされたバリアントが含まれる8つのゲノムのVCFファイルを扱っていきます。
 ![](/images/snowflake-registry-of-open-data-on-aws/DRAGEN_S3.png)
 *外部ステージ登録したDRAGENステージにクエリした結果*
 
@@ -77,7 +69,6 @@ create or replace table GENOTYPES_BY_SAMPLE (
    FILENAME    varchar
 );
 
--- これが長い。
 insert into GENOTYPES_BY_SAMPLE (
    CHROM       ,
    POS         ,
@@ -232,27 +223,22 @@ group by 1,2,3,4,5,6,7
 order by 1,2,5
 ;
 ```
-
-## SnowflakeでVCFファイルのバリアント解析をするメリット
+## Snowflakeでバリアント解析をするメリット
+SnowflakeでVCFファイルのバリアント解析を試してみたことで、色々とメリットがあることに気づいたのでまとめてみようと思います。
 
 ### フィルタリングワークフローの管理
 バリアント解析は、CSVやVCFなどの大量の中間ファイルが生成されることが一般的です。これらのファイルは、データの変換、フィルタリング、解析の各ステップで生成され、それぞれ異なる形式や構造を持つことが多いです。Snowflakeを使用すると、これらの中間ファイルをすべてテーブルとして保存し、一元管理することができます。テーブル形式で保存することで、データの可視化、検索、フィルタリング、分析が容易になり、データ管理が効率化されます。また、Snowflakeのスキーマに基づいてデータを整理できるため、データの整合性と品質を保つことができます。
 
 ### SQLによる簡便なデータフィルタリング
-Snowflakeを使用すると、SQLを利用してデータフィルタリングを行うことができます。SQLは、データベース管理システムで広く使われている標準言語であり、データの選択、フィルタリング、集計、結合など、さまざまな操作が簡単に行えます。Snpsiftなどの専用ツールと比較すると、SQLは以下の点で優れています。
-
-- 柔軟性：複雑なクエリを記述して多様なフィルタリング条件を指定できます。
-- 再利用性：クエリを保存しておけば、何度でも同じ操作を再実行することができます。
-- 統合性：異なるデータソースからのデータを一度に扱い、統合した形でフィルタリングできます。
-- スケーラビリティ：大量データに対しても高いパフォーマンスでフィルタリング処理を実行できます。
+Snowflakeを使用すると、SQLを利用してデータフィルタリングを行うことができます。SQLは、データベース管理システムで広く使われている標準言語であり、データの選択、フィルタリング、集計、結合など、さまざまな操作が簡単に行えます。Snpsiftなどの専用ツールのキャッチアップを行わずに済むのも魅力です。
 
 ### Snowflake上でのストレージ圧縮メリットを受けれる
-Snowflakeは、構造化データだけでなく、VCFファイルを含む非構造化データもサポートしています。Snowflakeのデータストレージは、以下のようなメリットがあります。
+Snowflakeは、構造化データだけでなく、VCFファイルを含む非構造化データもサポートしています。VCFをsnowflakeに格納することで圧縮メリットを受けられます。これによりS3などのストレージサービスに保存するよりもコストを抑えることが可能です。
 
-- 自動圧縮：データを取り込む際に自動的に圧縮が行われ、ストレージ容量が節約されます。これにより、コストの削減が期待できます。
-- 高効率のデータアクセス：圧縮されたデータは、必要に応じて迅速に解凍されるため、データアクセスの速度が向上します。
-- データ管理の簡便性：非構造化データを一元管理でき、必要なデータを迅速に検索、取得することが容易になります。
-- セキュリティとコンプライアンス：Snowflakeのセキュリティ機能により、データの安全性が確保され、コンプライアンス要件も満たすことができます。
+![](/images/snowflake-registry-of-open-data-on-aws/snowflake_vcf.png)
+*snowflakeは非構造化データとしてVCFをサポートしている*
 
-## 終わりに（おまけ：バイオデータとLLMの話）
-公共データとSnowflakeの外部ステージ登録は非常に相性が良く、うまく活用すればSnowflakeのストレージコストを抑えつつ、データの種類を増やすことができます。冒頭で述べた通り、バイオデータは今後ますます増加していくことが予想されます。また、昨今では大規模言語モデル（LLM）による開発も盛んになっています。医療データのPDFなど非構造化データを扱うことができれば、生物医学用語を理解するLLMモデルの構築も可能になります。SnowflakeのCortex LLMを活用したライフサイエンスデータの取り扱いは、今後ますます興味深いテーマとなるでしょう。バイオ系には公開データが豊富にあり、それを使ってLLMを構築することができます。Snowflakeを活用して、バイオデータを効果的に管理していきましょう。
+https://docs.snowflake.com/en/user-guide/unstructured-intro
+
+## 終わりに
+いかがだったでしょうか。Registry of Open Data on AWSのようなオープンデータをsnowflakeに取り込む事ができれば、Snowflakeでの解析の幅が広がります。公共データベースのデータをうまく使って解析をよりリッチなものにしていきましょう。今回はあらかじめバリアントコールされたサンプルを用いましたが、SnowflakeにはSnowpark Container Serviceがあるため、SAM/BAMファイルを用いてリファレンスゲノムへのマッピング、アライメント（BWA、Bowtie2、STAR など）、バリアントコール（GATK、Samtools/BCFtools など）といった前段階から始めることも可能です。こちらも随時検証してまいります。
