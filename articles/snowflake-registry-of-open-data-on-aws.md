@@ -235,7 +235,7 @@ Snowflakeを使用すると、SQLを利用してデータフィルタリング�
 ### Snowflake上でのストレージ圧縮メリットを受けれる
 Snowflakeは、構造化データだけでなく、VCFファイルを含む非構造化データもサポートしています。VCFをsnowflakeに格納することで圧縮メリットを受けられます。これによりS3などのストレージサービスに保存するよりもコストを抑えることが可能です。
 
-![](/images/snowflake-registry-of-open-data-on-aws/snowflake_vcf.png)
+![](https://storage.googleapis.com/zenn-user-upload/9d1b96226844-20240713.png)
 *snowflakeは非構造化データとしてVCFをサポートしている*
 
 https://docs.snowflake.com/en/user-guide/unstructured-intro
