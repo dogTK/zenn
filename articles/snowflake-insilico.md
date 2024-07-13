@@ -3,7 +3,7 @@ title: "SnowflakeでStreamlitとSnowflake Notebooksを用いたIn silico創薬"
 emoji: "💊"
 type: "tech"
 topics: [lifescience, insilico, Bioinformatics, snowflake, drug]
-published: false
+published: true
 ---
 
 ## はじめに
