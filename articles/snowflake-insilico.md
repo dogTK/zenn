@@ -1,5 +1,5 @@
 ---
-title: "StreamlitとSnowflake Notebooksを用いたIn silico創薬"
+title: "SnowflakeでStreamlitとSnowflake Notebooksを用いたIn silico創薬"
 emoji: "💊"
 type: "tech"
 topics: [lifescience, insilico, Bioinformatics, snowflake, drug]
@@ -69,11 +69,11 @@ DataStructs.TanimotoSimilarity(fp1, fp2)
 それでは実際にバーチャルスクリーニングに入っていきます。コードをまずは全文一気に紹介します。
 
 ```python
-# cell 7
+# cell 1
 spl = Chem.rdmolfiles.SmilesMolSupplier("EAED.smi")
 len(spl)
 
-# cell 8
+# cell 2
 laninamivir = Chem.MolFromSmiles("CO[C@H]([C@H](O)[C@H](O)CO[C@H]1OC(=C[C@H](NC(=N)N)[C@H]1NC(=O)C)C(=O)O")
 laninamivir_fp = AllChem.GetMorganFingerprint(laninamivir, 2)
 
@@ -82,18 +82,18 @@ def calc_laninamivir_similarity(mol):
     sim = DataStructs.TanimotoSimilarity(laninamivir_fp, fp)
     return sim
 
-# cell 9
+# cell 3
 similar_mols = []
 for mol in spl:
     sim = calc_laninamivir_similarity(mol)
     if sim > 0.2:
         similar_mols.append((mol, sim))
 
-# cell 10
+# cell 4
 similar_mols.sort(key=lambda x: x[1], reverse=True)
 mols = [x[0] for x in similar_mols[:10]]
 
-# cell 11
+# cell 5
 def visualize_mols(mols, grid_size=(5, 2)):
     st.header("Visualized Molecules")
 
@@ -120,49 +120,95 @@ def visualize_mols(mols, grid_size=(5, 2)):
 visualize_mols(mols)
 ```
 
-
 ![](/images/snowflake-insilico/notebooks_virtual_screening.gif)
 *実行風景*
 
-## 実行結果
-Snowflake Notebooks上でノイラミニダーゼ阻害剤「ラニナミビル」に類似した上位10の化合物をスクリーニングし、Streamlitを使用して分子構造を可視化することができました！
-![](https://storage.googleapis.com/zenn-user-upload/0d175308a88e-20240719.png)
+### 実行結果
+上記のコードを実行すると、Snowflake Notebooks上でノイラミニダーゼ阻害薬「ラニナミビル」に類似した化合物Top10をスクリーニングし、Streamlitで分子構造を可視化することができます。
+![](/images/snowflake-insilico/result_virtual_screening.png)
+
+### コードの解説
+このPythonスクリプトは、化学分子の類似度を計算し、類似分子を可視化するStreamlitアプリケーションです。以下に各セルの解説を示します。
+
+**セル 1: SMILESファイルの読み込み**
+```python
+spl = Chem.rdmolfiles.SmilesMolSupplier("EAED.smi")
+len(spl)
+```
+このセルでは、`EAED.smi`というファイルからSMILES形式の化学分子を読み込みます。`SmilesMolSupplier`を使用してファイル内のすべての分子をロードし、リスト`spl`に格納します。`len(spl)`は、読み込んだ分子の数を返します。
+
+**セル 2: 基準分子のフィンガープリント計算**
+```python
+laninamivir = Chem.MolFromSmiles("CO[C@H]([C@H](O)[C@H](O)CO[C@H]1OC(=C[C@H](NC(=N)N)[C@H]1NC(=O)C)C(=O)O")
+laninamivir_fp = AllChem.GetMorganFingerprint(laninamivir, 2)
+
+def calc_laninamivir_similarity(mol):
+    fp = AllChem.GetMorganFingerprint(mol, 2)
+    sim = DataStructs.TanimotoSimilarity(laninamivir_fp, fp)
+    return sim
+```
+ここでは、基準となる化学分子「ラニナミビル」をSMILES文字列から生成し、その分子のフィンガープリントを計算します。さらに、他の分子との類似度を計算する関数`calc_laninamivir_similarity`を定義します。この関数は、引数として渡された分子のフィンガープリントを計算し、ラニナミビルのフィンガープリントとのタニモト類似度を返します。
+
+**セル 3: 類似分子のフィルタリング**
+```python
+similar_mols = []
+for mol in spl:
+    sim = calc_laninamivir_similarity(mol)
+    if sim > 0.2:
+        similar_mols.append((mol, sim))
+```
+このセルでは、`spl`リスト内のすべての分子に対して、ラニナミビルとの類似度を計算します。類似度が0.2を超える分子を`similar_mols`リストに追加します。
+
+**セル 4: 類似分子のソートと選択**
+```python
+similar_mols.sort(key=lambda x: x[1], reverse=True)
+mols = [x[0] for x in similar_mols[:10]]
+```
+ここでは、`similar_mols`リストを類似度の降順でソートし、最も類似度が高い10個の分子を選択します。選択された分子は`mols`リストに格納されます。
+
+**セル 5: 分子の可視化**
+```python
+def visualize_mols(mols, grid_size=(5, 2)):
+    st.header("Visualized Molecules")
+
+    img_per_row, img_per_col = grid_size
+    mol_imgs = [Draw.MolToImage(mol) for mol in mols]
+
+    width, height = mol_imgs[0].size
+    canvas_width = width * img_per_row
+    canvas_height = height * img_per_col
+
+    canvas = Image.new('RGB', (canvas_width, canvas_height))
+
+    for i, img in enumerate(mol_imgs):
+        row = i // img_per_row
+        col = i % img_per_row
+        x = col * width
+        y = row * height
+        canvas.paste(img, (x, y))
+
+    buf = io.BytesIO()
+    canvas.save(buf, format='PNG')
+    st.image(buf.getvalue(), use_column_width=True)
+
+visualize_mols(mols)
+```
+最後に、選択された分子をグリッド形式で可視化する関数`visualize_mols`を定義し、実行します。この関数は、与えられた分子リストを画像に変換し、指定されたグリッドサイズ（ここでは5x2）に従ってキャンバスに配置します。キャンバスの画像はバッファに保存され、Streamlitを使用して表示されます。
 
 ## SnowflakeでIn silico創薬をするメリット
 SnowflakeでIn silico創薬のバーチャルスクリーニングを試してみたことで、色々とメリットがあることに気づいたのでまとめてみようと思います。
 
-Snowflakeは、クラウドベースのデータプラットフォームとして、データウェアハウス、データレイク、データエンジニアリング、データサイエンスなどの機能を統合的に提供しています。以下に、Snowflakeが提供する機械学習フレームワークやデータ管理のメリットについて詳細に解説します。
+### 1. 機械学習フレームワークの利用
+Snowpark MLなどのフレームワークを利用することで、複雑なインフラの設定、ローカルでの環境構築が不要になります。Snowflakeは、自動的にスケーリングするため、大規模なデータセットや複雑な機械学習モデルの訓練にも対応可能です。ユーザーは必要に応じてリソースを拡張でき、計算能力を最大限に活用できます。
 
-1. 機械学習フレームワークの利用
-Snowpark MLなどデータの移動や複雑なインフラの設定、ローカルでの環境構築が不要で迅速かつ効率的な機械学習の実行が可能
-統合された環境:
+### 2. 大量の化合物データセットを効率よく格納
+創薬プロセスにおいて必要となる大量の化合物データや生物学的データを一元管理が可能です。これにより、データの可視性が向上し、研究者は必要なデータに迅速にアクセスできます。またSnowflakeの強力なクエリエンジンを使用して、膨大な化合物データセットを高速に検索およびフィルタリングすることができます。
 
-Snowpark MLなどのフレームワークを利用することで、データの移動やインフラの設定が不要となります。これにより、データサイエンティストやアナリストは、ローカル環境を構築せずにSnowflake上で直接機械学習モデルを構築・訓練・評価することができます。
-利点: 時間とリソースの節約、データ移動に伴うセキュリティリスクの低減。
-スケーラブルな計算リソース:
+### 3. ハイコンピューティングリソースが要求される解析まで一貫して解析が可能
+Snowflake Powered Compute Serviceを利用すれば、分子動力学（MD）シミュレーションやドッキングシミュレーション、タンパク質の3次元構造予測、PyMOLによる分子構造の立体的な可視化など、高度な計算リソースを必要とする解析を実行できます。ハイコンピューティングリソースが要求される解析までエンドツーエンドで解析することが可能です。これにより、研究者は計算負荷の高いシミュレーションをエンドツーエンドの解析ワークフロー実行できます。
 
-Snowflakeのクラウドインフラは、自動的にスケーリングするため、大規模なデータセットや複雑な機械学習モデルの訓練にも対応可能です。ユーザーは必要に応じてリソースを拡張でき、計算能力を最大限に活用できます。
-利点: 大規模データ処理の迅速化、高パフォーマンスの実現。
-2. 大量の化合物データセットを効率よく格納
-創薬プロセスにおいて必要となる大量の化合物データや生物学的データを一元管理が可能。めぼしい化合物を類縁体スクリーニングに素早くかける事ができる
-中央集権的データ管理:
-
-Snowflakeは、化合物データや生物学的データを一元的に管理するための堅牢なプラットフォームを提供します。これにより、データの可視性が向上し、研究者は必要なデータに迅速にアクセスできます。
-利点: データの整合性確保、データアクセスの迅速化。
-高速なデータ検索とフィルタリング:
-
-Snowflakeの強力なクエリエンジンを使用して、膨大な化合物データセットを高速に検索およびフィルタリングすることができます。これにより、研究者は有望な化合物を迅速に特定し、次のステップに進むことができます。
-利点: スクリーニングプロセスの高速化、研究サイクルの短縮。
-3. ハイコンピューティングリソースが要求される解析まで一貫して解析が可能
-SPCSを利用すれば、MDやドッキングシミュレーションといったハイコンピューティングリソースが要求される解析までエンドツーエンドで解析することが可能
-エンドツーエンドの解析ワークフロー:
-
-Snowflakeは、SPCS（Snowflake Powered Compute Service）を活用することで、分子動力学（MD）シミュレーションやドッキングシミュレーションなど、高度な計算リソースを必要とする解析を実行できます。これにより、初期のデータ収集から最終的なシミュレーションまでのすべてのステップを一貫して行うことができます。
-利点: 一貫したワークフローの確立、解析精度の向上。
-高い計算能力とスケーラビリティ:
-
-Snowflakeのクラウドインフラは、高い計算能力とスケーラビリティを提供します。これにより、研究者は計算負荷の高いシミュレーションを効率的に実行できます。
-利点: 大規模シミュレーションの実行、計算リソースの効率的な利用。
+![](/images/snowflake-insilico/movie_if.png)
+*PyMOL ref:https://pymol.org/animate.html?*
 
 ## 終わりに
-いかがだったでしょうか。
+いかがだったでしょうか。Streamlit in SnowflakeやSnowflake Notebooksはデータサイエンティストのみならず、ケモインフォマティクスやバイオインフォマティクスに取り組むインフォマティシャンにとっても使える機能です。今回はNotebooks上にアップロードしたSMILES形式データを使いましたが、あらかじめテーブルにアップロードしておけばもっと高速でスクリーニングをかけることが可能になりますし、[こちらの記事](https://medium.com/snowflake-engineering/variant-filtering-of-genome-vcf-files-with-snowflake-utilizing-the-registry-of-open-data-on-aws-670dd433429e)のRegistry of Open Data on AWSに存在するChEMBLデータを外部ステージとして取り込める状態にしておけば公共データをうまく使うこともできます。より最適なIn Silico創薬環境を整えて行きたいと思います。
