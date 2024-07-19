@@ -126,7 +126,7 @@ visualize_mols(mols)
 
 ## 実行結果
 Snowflake Notebooks上でノイラミニダーゼ阻害剤「ラニナミビル」に類似した上位10の化合物をスクリーニングし、Streamlitを使用して分子構造を可視化することができました！
-![](/images/snowflake-insilico/virtual_results.png)
+![](https://storage.googleapis.com/zenn-user-upload/0d175308a88e-20240719.png)
 
 ## SnowflakeでIn silico創薬をするメリット
 SnowflakeでIn silico創薬のバーチャルスクリーニングを試してみたことで、色々とメリットがあることに気づいたのでまとめてみようと思います。
