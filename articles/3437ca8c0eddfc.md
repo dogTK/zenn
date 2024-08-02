@@ -24,7 +24,7 @@ Powered by Snowflakeを体現しようと尽力している弊社にとって大
 
 ~~2023年12月22日現在、Snowpark Container Services 、AWS の ヨーロッパ (ロンドン)、アジアパシフィック (ムンバイ)でしか使用できません。また、トライアルアカウントはサポートされていないことに注意してください。Azure と GCP のプライベート プレビューは後日発表される予定のようです。こちらは状況が変わり次第、また追記していきます。~~
 
-こちら、とうとう東京リージョンが使えるようになりました！！そのため、本記事の「ムンバイまたはロンドンリージョンに環境を作る」は対応しなくても良くなります！
+こちら、試用アカウントを除く AWS 商用リージョン内のすべてのSnowflakeアカウントで利用できるようになりました！！そのため、本記事の「ムンバイまたはロンドンリージョンに環境を作る」は対応しなくても良くなります！
 
 https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overview#available-regions
 
@@ -33,12 +33,21 @@ https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overvi
 本チュートリアルではDocker Desktopがインストールされている前提で話をしますので、まだの方は[こちら](https://docs.docker.com/get-docker/)を参考にインストールをお願いします。
 :::
 
-（追記）
+---
+
+**（追記）**
 Snowpark Container Serviceに関する記事を一番に出そうとしたら、masuoさんに先越されました...笑
 https://zenn.dev/tmasuo/articles/ab21cf8ac1c76f
 
 しかし、Masuoさんの記事はQuick startを取り扱ってるので、私のTutorialといい感じで棲み分けられそうです！両方の記事をご参考ください！！
 （GAになってからsnowflake社員以外では一番？）
+
+---
+
+**(2024年8月2日 追記2)**
+Snowflake社がSPCSのコンピューティング料金を50%オフにしてくれました!!コストで使用を諦めていた方も再度検討の余地がありそうですね！
+https://x.com/SnowflakeDB/status/1819057973265944960
+
 
 ## Snowpark Container Serviceとは？
 
@@ -72,7 +81,7 @@ https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overvi
 ## ~~ムンバイまたはロンドンリージョンに環境を作る~~ （しなくて良い）
 
 ::: message alert
-SPCSは東京リージョンにリリースされ、ムンバイまたはロンドンリージョンに環境を作る必要はなくなりました。こちらの手順はスキップし、「Snowflakeの各種オブジェクトを用意する」に進みください。
+SPCSは、試用アカウントを除くAWS商用リージョン内のすべてのSnowflakeアカウントで利用できるようになりましたので、ムンバイまたはロンドンリージョンに環境を作る必要はなくなりました。こちらの手順はスキップし、「Snowflakeの各種オブジェクトを用意する」に進みください。
 :::
 
 チュートリアルを始める前に、orgadminロールを使用して、[create account](https://docs.snowflake.com/ja/sql-reference/sql/create-account)コマンドでムンバイまたはロンドンリージョンに環境を作る必要があります。
@@ -411,7 +420,7 @@ ingress_url列に表示されたエンドポイントに「/ui」をつけてbro
 https://[ingress_url列に表示されたエンドポイント]/ui
 ```
 
-アクセスできました！！初回はログインを要求されるので、snowflakeアカウントにろぐいんするときのlogin_nameとpasswordを入れてください。
+アクセスできました！！初回はログインを要求されるので、snowflakeアカウントにログインするときのlogin_nameとpasswordを入れてください。
 ![](https://storage.googleapis.com/zenn-user-upload/cfbc0bb016b5-20231224.png)
 
 UIが表示されました！
@@ -471,7 +480,7 @@ Snowpark Container Services を使用する場合、Snowflake ステージの使
 
 [CreditConsumptionTable.pdf](https://www.snowflake.com/legal-files/CreditConsumptionTable.pdf)と[create-compute-pool](https://docs.snowflake.com/en/sql-reference/sql/create-compute-pool)を参照すればコスト見積もりが可能です。
 
-![](https://storage.googleapis.com/zenn-user-upload/066f33ce7aa9-20231222.png)
+![](https://storage.googleapis.com/zenn-user-upload/e8a5c4d5508f-20240802.png)
 
 
 | Mapping | INSTANCE_FAMILY | vCPU | Memory (GiB) | Storage (GiB) | GPU | GPU Memory (GiB) | Description |
@@ -484,10 +493,22 @@ Snowpark Container Services を使用する場合、Snowflake ステージの使
 | ハイメモリCPU / M | HIGHMEM_X64_M | 32 | 256 | 250 | 該当なし | 該当なし | 単一マシン上で複数のメモリ集中型アプリケーションをホストする場合。 |
 | ハイメモリCPU / L | HIGHMEM_X64_L | 128 | 1024 | 250 | 該当なし | 該当なし | 大規模なメモリ内データの処理に利用できる最大の高メモリ マシン。 |
 | GPU / S | GPU_NV_S | 8 | 32 | 250 | 1 NVIDIA A10G | 24 | Snowpark Container を開始するために利用できる最小の NVIDIA GPU サイズ。 |
-| GPU / M | GPU_NV_M | 48 | 192 | 250 | 4 NVIDIA A10G | 96 | コンピューター ビジョンや LLM/VLM などの集中的な GPU 使用シナリオ向けに最適化 |
-| GPU / L | GPU_NV_L | 192 | 2048年 | 250 | 8 NVIDIA H100 | 640 | LLM やクラスタリングなどの特殊かつ高度な GPU ケース向けの最大の GPU インスタンス。 |
+| GPU / M | GPU_NV_M | 48 | 192 | 250 | 4 NVIDIA A10G | 24 | コンピューター ビジョンや LLM/VLM などの集中的な GPU 使用シナリオ向けに最適化 |
+| GPU / L | GPU_NV_L | 96 | 1152 | 250 | 8 NVIDIA A100 | 40 | LLM やクラスタリングなどの特殊かつ高度な GPU ケース向けの最大の GPU インスタンス。 |
 
 コンピューティング プールが IDLE、ACTIVE、STOPPING、RESIZING 状態の場合は料金が発生しますが、STARTING または SUSPENDED 状態の場合は料金が発生しません。（コンピューティングプールのリソース状態は「**[コンピューティング プールのライフサイクル](https://docs.snowflake.com/en/developer-guide/snowpark-container-services/working-with-compute-pool#compute-pool-lifecycle)**」の項目を参照）
+
+またAzureだけですが、GPU_NV_XSなどGPUインスタンスがより細かく選択できるようになっています。
+
+| Mapping          | INSTANCE_FAMILY | vCPU | Memory (GiB) | Storage (GiB) | GPU               | GPU Memory (GiB) | Description                                                                         |
+|------------------|-----------------|------|--------------|---------------|-------------------|------------------|-------------------------------------------------------------------------------------|
+| GPU_NV_XS (Azure)| GPU_NV_XS       | 3    | 26           | 100           | 1 NVIDIA T4       | 16               | Our smallest Azure NVIDIA GPU size available for Snowpark Containers to get started.|
+| GPU_NV_SM (Azure)| GPU_NV_SM       | 32   | 424          | 100           | 1 NVIDIA A10      | 24               | A smaller Azure NVIDIA GPU size available for Snowpark Containers to get started.   |
+| GPU_NV_2M (Azure)| GPU_NV_2M       | 68   | 858          | 100           | 2 NVIDIA A10      | 24               | Optimized for intensive GPU usage scenarios like Computer Vision or LLMs/VLMs       |
+| GPU_NV_3M (Azure)| GPU_NV_3M       | 44   | 424          | 100           | 1 NVIDIA A100     | 80               | Optimized for memory-intensive GPU usage scenarios like Computer Vision or LLMs/VLMs|
+| GPU_NV_SL (Azure)| GPU_NV_SL       | 92   | 858          | 100           | 4 NVIDIA A100     | 80               | Largest GPU instance for specialized and advanced GPU cases like LLMs and Clustering etc. |
+
+参考：https://docs.snowflake.com/en/sql-reference/sql/create-compute-pool#required-parameters
 
 ## ****データ転送コスト****
 
