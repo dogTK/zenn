@@ -10,7 +10,7 @@ published: true
 publication_name: "dataheroes"
 ---
 
-![](/images/squad/top.png)
+![](https://storage.googleapis.com/zenn-user-upload/5665b531603f-20240806.png)
 
 ## タイトル
 
