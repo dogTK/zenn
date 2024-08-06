@@ -6,7 +6,8 @@ topics:
   - "snowflake"
   - "snowflakesquad"
   - "polarbar"
-published: false
+published: true
+publication_name: "dataheroes"
 ---
 
 ## タイトル
