@@ -10,6 +10,8 @@ published: true
 publication_name: "dataheroes"
 ---
 
+![](/images/squad/top.png)
+
 ## タイトル
 
 **Polar Bar第3回 Squad会 ~Snowflake Squadとは!？~**
