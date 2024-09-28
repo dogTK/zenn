@@ -11,6 +11,73 @@ publication_name: "dataheroes"
 データエンジニアの是枝です。
 皆さんはsnowflakeから自分の使っているchatツールに通知したいと思うことはないでしょうか。snowflakeで起こったエラーに素早く気づくためには、通知の仕組みを実装するのが監視の基本ですよね。今回はsnowflakeからslack通知の実現方法をいくつかご紹介したいと思います。
 
+:::message
+これまでの3つの方法よりも簡便な Sending webhook notifications 機能がリリースされました。
+snowflakeからwebhook経由でslack通知ができるようになります。こちらのwebhookはslack専用で用意されているものです。
+https://docs.snowflake.com/en/user-guide/notifications/webhook-notifications
+
+3つの方法の前にまずはSending webhook notificationsを使えないか検討することをおすすめします。
+:::
+
+## Sending webhook notificationsのやり方
+
+### 手順1 Slack Webhook のシークレットを作成する¶
+
+まずはslackのappsにアクセスしてください。アプリが未作成の場合は、作成する必要があります。
+https://api.slack.com/apps?new_app=1
+
+
+Webhook URL（画像赤枠の部分）をコピーします。
+![](https://storage.googleapis.com/zenn-user-upload/b74c1e4ab660-20240928.png)
+
+すると次のような形式の URL が手に入ります。こちらにSlack Webhookに通知を送信していきます。
+
+`https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX`
+
+このシークレットのシークレット オブジェクトを作成するには、次のステートメントを実行します。
+`https://hooks.slack.com/services/` 以降の文字列を`SECRET_STRING`に追加します。
+
+```sql
+CREATE OR REPLACE SECRET my_slack_webhook_secret
+  TYPE = GENERIC_STRING
+  SECRET_STRING = 'T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX';
+```
+
+### 手順2 Webhook通知統合の作成
+Webhook タイプの通知統合を作成するには、 CREATE NOTIFICATION INTEGRATIONコマンドを使用します。
+
+```sql
+CREATE OR REPLACE NOTIFICATION INTEGRATION my_slack_webhook_int
+  TYPE=WEBHOOK
+  ENABLED=TRUE
+  WEBHOOK_URL='https://hooks.slack.com/services/SNOWFLAKE_WEBHOOK_SECRET'
+  WEBHOOK_SECRET=my_secrets_db.my_secrets_schema.my_slack_webhook_secret
+  WEBHOOK_BODY_TEMPLATE='{"text": "SNOWFLAKE_WEBHOOK_MESSAGE"}'
+  WEBHOOK_HEADERS=('Content-Type'='application/json');
+```
+手順1で作成したシークレットをNOTIFICATION INTEGRATIONを作成する際に指定します。WEBHOOK_SECRETはデータベース.スキーマから指定しています。
+これで準備完了です。
+
+### 手順3 Webhookに通知を送信する
+それでは実際に通知を送ってみたいと思います。下記コマンドを実行することで可能です。
+
+```sql
+CALL SYSTEM$SEND_SNOWFLAKE_NOTIFICATION(
+    SNOWFLAKE.NOTIFICATION.APPLICATION_JSON(
+        SELECT
+            OBJECT_CONSTRUCT(
+                'text', 'Sending webhook notification test'
+        )::string
+    ),
+    SNOWFLAKE.NOTIFICATION.INTEGRATION('my_slack_webhook_int')
+);
+```
+
+うまく行けば以下のようにslack通知が来ます。
+![](https://storage.googleapis.com/zenn-user-upload/b818cf95dd5b-20240928.png)
+
+これでSending webhook notificationsは完了です。
+
 ## 方法1：EXTERNAL NETWORK ACCESSによる外部アクセス統合を利用する
 
 EXTERNAL NETWORK ACCESSは外部ネットワークにセキュアにアクセスできる方法として知られています。UDFやストアドプロシージャで使用する事ができ、簡単に外部アクセス統合が実現可能です。こちらを利用してslackにリクエストを飛ばして通知を実現します。理論上、APIさえ開放されていれば、いかなるチャットツールにも通知を出すことができる手法となります。流れは以下です。
