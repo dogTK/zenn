@@ -3,11 +3,11 @@ title: "第1回 Snowflakeヘルスケアユーザーグループ会を開催し�
 emoji: "❄️"
 type: "tech"
 topics:
-  - "security"
+  - "healthcare"
   - "snowflake"
-  - "bigdata"
-  - "snowpark"
-  - "datashare"
+  - "lifescience"
+  - "usergroup"
+  - "drugdiscovery"
 published: true
 ---
 
