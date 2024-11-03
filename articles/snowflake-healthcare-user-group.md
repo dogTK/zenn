@@ -8,7 +8,7 @@ topics:
   - "bigdata"
   - "snowpark"
   - "datashare"
-published: false
+published: true
 ---
 
 クリニックフォアグループの是枝です。
